@@ -1,0 +1,26 @@
+- name: Install Tmux
+  package:
+    name: tmux
+  become: true
+
+- name: Remove Old .tmux directory
+  file:
+    state: absent
+    path: ~/.tmux
+
+- name: Install TPM
+  git:
+    repo: "https://github.com/tmux-plugins/tpm"
+    dest: "~/.tmux/plugins/tpm"
+
+- name: Install Theme
+  git:
+    repo: https://github.com/catppuccin/tmux.git
+    dest: "~/.tmux/plugins/catppuccin/tmux"
+    version: "v2.1.3"
+
+- name: "Tmux | Configure tmux"
+  ansible.builtin.copy:
+    src: files/.tmux.conf
+    dest: "$HOME/.tmux.conf"
+    mode: "0644"

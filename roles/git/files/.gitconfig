@@ -1,0 +1,17 @@
+[user]
+	email = jackgpalfrey@outlook.com
+	name = Jack Palfrey
+	signingkey = /home/jack/.ssh/id_ed25519.pub
+[credential "https://github.com"]
+	helper = 
+	helper = !/usr/bin/gh auth git-credential
+[gpg]
+	format = ssh
+[commit]
+	gpgsign = true
+	template = ~/.git-template
+
+[push]
+	gpgsign = if-asked
+[tag]
+	gpgsign = true

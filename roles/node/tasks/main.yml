@@ -1,0 +1,16 @@
+- name: Install Node
+  package:
+    name:
+      - "nodejs"
+      - "npm"
+  become: true
+
+- name: Install 'n' version manager
+  become: true
+  npm:
+    name: n
+    global: true
+
+- name: Use node version 20
+  shell: n 20
+  become: true

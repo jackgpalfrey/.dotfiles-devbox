@@ -1,0 +1,6 @@
+- name: "Scripts | Create symlink to role files directory"
+  ansible.builtin.file:
+    src: "{{ role_path }}/files/scripts"
+    dest: "$HOME/scripts"
+    state: link
+    force: true

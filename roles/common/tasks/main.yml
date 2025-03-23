@@ -1,0 +1,7 @@
+- name: Install core packages
+  become: true
+  ansible.builtin.package:
+    name: "{{ item }}"
+    state: latest
+    update_cache: no
+  loop: "{{ core_packages }}"

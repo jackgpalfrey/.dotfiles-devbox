@@ -1,0 +1,33 @@
+return {
+	"lewis6991/gitsigns.nvim",
+	event = "BufEnter",
+	cmd = "Gitsigns",
+	keys = {
+		{ "<leader>gj", ":Gitsigns next_hunk<CR>", desc = "[G]it goto [j] next hunk" },
+		{ "<leader>gk", ":Gitsigns prev_hunk<CR>", desc = "[G]it goto [k] prev hunk" },
+		{ "<leader>gp", ":Gitsigns preview_hunk<CR>", desc = "[G]it [P]review Hunk" },
+		{ "<leader>gr", ":Gitsigns reset_hunk<CR>", desc = "[G]it [R]eset Hunk" },
+		{ "<leader>gR", ":Gitsigns reset_buffer<CR>", desc = "[G]it [R]eset Buffer" },
+		{ "<leader>ga", ":Gitsigns stage_hunk<CR>", desc = "[G]it [A]dd Hunk" },
+		{ "<leader>gA", ":Gitsigns stage_buffer<CR>", desc = "[G]it [A]dd Buffer" },
+		{ "<leader>gl", ":Gitsigns blame_line<CR>", desc = "[G]it Blame [L]ine" },
+		{ "<leader>gd", ":Gitsigns diffthis<CR>", desc = "[G]it [D]iff against index" },
+		{ "<leader>gD", ":Gitsigns diffthis ~<CR>", desc = "[G]it [D]iff against last commit" },
+		{ "<leader>gr", ":Gitsigns toggle_deleted<CR>", desc = "Toggle [G]it Show [R]emoved" },
+	},
+	opts = {
+		signs = {
+			add = { text = "+" },
+			change = { text = "~" },
+			delete = { text = "_" },
+			topdelete = { text = "‾" },
+			changedelete = { text = "-" },
+			-- add = { text = "▎" },
+			-- change = { text = "▎" },
+			-- delete = { text = "" },
+			-- topdelete = { text = "" },
+			-- changedelete = { text = "▎" },
+			-- untracked = { text = "▎" },
+		},
+	},
+}

@@ -1,0 +1,11 @@
+- name: Ensure .ssh directory exists.
+  file:
+    dest: "$HOME/.ssh"
+    mode: 0700
+    state: directory
+
+- name: Copy ssh
+  copy:
+    src: "files/.ssh/"
+    dest: "$HOME/.ssh"
+    mode: 0600

@@ -1,0 +1,6 @@
+core_packages:
+  - curl
+  - fzf
+  - cmake
+  - unzip
+  - ripgrep

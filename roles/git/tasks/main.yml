@@ -1,0 +1,14 @@
+- name: Install Git
+  package:
+    name: git
+  become: true
+
+- name: Install Github CLI
+  package:
+    name: gh
+  become: true
+
+- name: Copy git configuration
+  copy:
+    src: "files/"
+    dest: "$HOME"

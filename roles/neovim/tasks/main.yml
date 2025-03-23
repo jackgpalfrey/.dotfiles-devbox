@@ -1,0 +1,63 @@
+- name: Install nvim build dependencies
+  become: true
+  apt:
+    name:
+      - ninja-build
+      - gettext
+      - libtool
+      - libtool-bin
+      - autoconf
+      - automake
+      - cmake
+      - g++
+      - pkg-config
+      - unzip
+      - curl
+    state: present
+  tags:
+    - nvim
+
+- name: Verify removed old .neovim_repo directory
+  file:
+    state: absent
+    path: "{{ tmp_dir }}/.neovim_repo"
+  tags:
+    - nvim
+
+- name: Clone Neovim
+  git:
+    repo: "https://github.com/neovim/neovim"
+    dest: "{{ tmp_dir }}/.neovim_repo"
+  tags:
+    - nvim
+
+- name: Build nvim release version
+  community.general.make:
+    chdir: "{{ tmp_dir }}/.neovim_repo"
+    params:
+      CMAKE_BUILD_TYPE: Release #RelWithDebInfo
+  tags:
+    - nvim
+
+- name: Install nvim release version
+  become: true
+  become_flags: "-E"
+  community.general.make:
+    chdir: "{{ tmp_dir }}/.neovim_repo"
+    target: install
+  tags:
+    - nvim
+
+- name: Remove temp .neovim_repo directory
+  file:
+    state: absent
+    path: "{{ tmp_dir }}/.neovim_repo"
+  tags:
+    - nvim
+
+- name: "Neovim | Create symlink to role files directory"
+  ansible.builtin.file:
+    src: "{{ role_path }}/files/config"
+    dest: "$HOME/.config/nvim"
+    state: link
+    force: true

@@ -1,0 +1,4 @@
+- name: Rust | Install via rustup
+  shell: curl https://sh.rustup.rs -sSf | sh -s -- -y && source "$HOME/.cargo/env"
+  register: rust_result
+  failed_when: "'Rust is installed now.' not in rust_result.stdout"
