@@ -44,7 +44,7 @@ OP_AUTHENTICATED=false
 OP_VAULT_SECRET=""
 ID=""
 DOTFILES_LOG="$HOME/.dotfiles.log"
-DOTFILES_DIR="$HOME/.dotfiles-ubuntu-dev-box/"
+DOTFILES_DIR="$HOME/.dotfiles-devbox/"
 SSH_DIR="$HOME/.ssh"
 IS_FIRST_RUN="$HOME/.dotfiles_run"
 # _header colorize the given argument with spacing
@@ -236,13 +236,13 @@ esac
 #   _cmd "cat $SSH_DIR/id_rsa.pub >> $SSH_DIR/authorized_keys"
 # fi
 
-# if ! [[ -d "$DOTFILES_DIR" ]]; then
-#   __task "Cloning repository"
-#   _cmd "git clone --quiet https://github.com/jackgpalfrey/.dotfiles-devbox.git $DOTFILES_DIR"
-# else
-#   __task "Updating repository"
-#   _cmd "git -C $DOTFILES_DIR pull --quiet"
-# fi
+if ! [[ -d "$DOTFILES_DIR" ]]; then
+  __task "Cloning repository"
+  _cmd "git clone --quiet https://github.com/jackgpalfrey/.dotfiles-devbox.git $DOTFILES_DIR"
+else
+  __task "Updating repository"
+  _cmd "git -C $DOTFILES_DIR pull --quiet"
+fi
 
 pushd "$DOTFILES_DIR" 2>&1 > /dev/null
 update_ansible_galaxy $ID
@@ -250,7 +250,7 @@ update_ansible_galaxy $ID
 # confirmVaultAccess
 
 rm -f $VAULT_SECRET_FILE
-ansible-playbook "$DOTFILES_DIR/main.yml" --ask-become-pass --ask-vault-pass
+ansible-playbook "$DOTFILES_DIR/main.yml" --ask-become-pass --ask-vault-pass "$@"
 
 popd 2>&1 > /dev/null
 
