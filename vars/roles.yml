@@ -10,3 +10,4 @@ default_roles:
   - scripts
   - tmux
   - python
+  - golang
