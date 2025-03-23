@@ -15,21 +15,21 @@
       - curl
     state: present
   tags:
-    - nvim
+    - neovim
 
 - name: Verify removed old .neovim_repo directory
   file:
     state: absent
     path: "{{ tmp_dir }}/.neovim_repo"
   tags:
-    - nvim
+    - neovim
 
 - name: Clone Neovim
   git:
     repo: "https://github.com/neovim/neovim"
     dest: "{{ tmp_dir }}/.neovim_repo"
   tags:
-    - nvim
+    - neovim
 
 - name: Build nvim release version
   community.general.make:
@@ -37,7 +37,7 @@
     params:
       CMAKE_BUILD_TYPE: Release #RelWithDebInfo
   tags:
-    - nvim
+    - neovim
 
 - name: Install nvim release version
   become: true
@@ -46,19 +46,21 @@
     chdir: "{{ tmp_dir }}/.neovim_repo"
     target: install
   tags:
-    - nvim
+    - neovim
 
 - name: Remove temp .neovim_repo directory
   file:
     state: absent
     path: "{{ tmp_dir }}/.neovim_repo"
   tags:
-    - nvim
+    - neovim
 
 - name: Ensure .config directory exists.
   file:
     dest: "$HOME/.config"
     state: directory
+  tags:
+    - neovim
 
 - name: "Neovim | Create symlink to role files directory"
   ansible.builtin.file:
@@ -66,3 +68,5 @@
     dest: "$HOME/.config/nvim"
     state: link
     force: true
+  tags:
+    - neovim
