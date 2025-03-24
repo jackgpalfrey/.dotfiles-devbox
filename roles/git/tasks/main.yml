@@ -3,19 +3,115 @@
     name: git
   become: true
 
-- name: Install Github CLI
-  package:
-    name: gh
-  become: true
+- name: "Git | Ensure ~/.config/git exists"
+  ansible.builtin.file:
+    path: "{{ ansible_user_dir }}/.config/git"
+    state: directory
+    mode: "0755"
 
 - name: Copy git configuration
   copy:
     src: "files/"
-    dest: "$HOME"
+    dest: "{{ ansible_user_dir }}/.config/git"
 
-- name: Add gh setup to dotfiles-steps.md
-  ansible.builtin.lineinfile:
-    path: "$HOME/dotfiles-steps.md"
-    line: "[ ] Login to github with `gh auth login`"
-    create: true
-    state: present
+# [user]
+- name: "Git | Set user.email"
+  community.general.git_config:
+    name: user.email
+    scope: global
+    value: "{{ git.email }}"
+  no_log: true
+
+- name: "Git | Set user.name"
+  community.general.git_config:
+    name: user.name
+    scope: global
+    value: "{{ git.name }}"
+
+- name: "Git | Set user.signingkey"
+  community.general.git_config:
+    name: user.signingkey
+    scope: global
+    value: "{{ ansible_env.HOME }}/.ssh/id_ed25519.pub"
+
+# [gpg]
+- name: "Git | Set gpg.format"
+  community.general.git_config:
+    name: gpg.format
+    scope: global
+    value: ssh
+
+# [commit]
+- name: "Git | Set commit.gpgsign"
+  community.general.git_config:
+    name: commit.gpgsign
+    scope: global
+    value: true
+
+- name: "Git | Set commit.template"
+  community.general.git_config:
+    name: commit.template
+    scope: global
+    value: "{{ ansible_user_dir }}/.config/git/global.commit.template"
+
+# [tag]
+- name: "Git | Set tag.gpgsign"
+  community.general.git_config:
+    name: tag.gpgsign
+    scope: global
+    value: true
+
+# [diff]
+- name: "Git | Set diff.colorMoved"
+  community.general.git_config:
+    name: diff.colorMoved
+    scope: global
+    value: zebra
+
+# [fetch]
+- name: "Git | Set fetch.prune"
+  community.general.git_config:
+    name: fetch.prune
+    scope: global
+    value: true
+
+# [init]
+- name: "Git | Set init.defaultBranch"
+  community.general.git_config:
+    name: init.defaultBranch
+    scope: global
+    value: "{{ git.defaultBranch }}"
+
+# [rerere]
+- name: "Git | Set rerere.enabled"
+  community.general.git_config:
+    name: rerere.enabled
+    scope: global
+    value: true
+
+# [pull]
+- name: "Git | Set pull.ff"
+  community.general.git_config:
+    name: pull.ff
+    scope: global
+    value: only
+
+- name: "Git | Set pull.rebase"
+  community.general.git_config:
+    name: pull.rebase
+    scope: global
+    value: true
+
+# [rebase]
+- name: "Git | Set rebase.autoStash"
+  community.general.git_config:
+    name: rebase.autoStash
+    scope: global
+    value: true
+
+# [gpg "ssh"]
+- name: "Git | Set gpg.ssh.allowedSignersFile"
+  community.general.git_config:
+    name: gpg.ssh.allowedSignersFile
+    scope: global
+    value: "{{ ansible_env.HOME }}/.config/git/allowed_signers"

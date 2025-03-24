@@ -4,7 +4,7 @@
   connection: local
 
   vars_files:
-    - "vars/roles.yml"
+    - "vars/git.yml"
     - "vars/packages.yml"
 
   vars:
@@ -20,14 +20,20 @@
     - name: Read installed_roles
       command: "cat $HOME/.dotfiles-info/installed_roles"
       register: installed_roles
+      tags:
+        - always
 
     - name: Log
       debug: "msg={{ installed_roles.stdout_lines }}"
+      tags:
+        - always
       # with_items: "{{ installed_roles.stdout_lines }}"
 
     - name: Set roles
       ansible.builtin.set_fact:
         run_roles: "{{ installed_roles.stdout_lines }}"
+      tags:
+        - always
 
     # - name: Set roles
     #   ansible.builtin.set_fact:
