@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# color codes
+###############################################################################
+################################# Color Codes #################################
+###############################################################################
 RESTORE='\033[0m'
 NC='\033[0m'
 BLACK='\033[00;30m'
@@ -22,7 +24,9 @@ LCYAN='\033[01;36m'
 WHITE='\033[01;37m'
 OVERWRITE='\e[1A\e[K'
 
-#emoji codes
+###############################################################################
+################################# Emoji Codes #################################
+###############################################################################
 CHECK_MARK="${GREEN}\xE2\x9C\x94${NC}"
 X_MARK="${RED}\xE2\x9C\x96${NC}"
 PIN="${RED}\xF0\x9F\x93\x8C${NC}"
@@ -33,11 +37,15 @@ HOT="${ORANGE}\xF0\x9F\x94\xA5${NC}"
 WARNING="${RED}\xF0\x9F\x9A\xA8${NC}"
 RIGHT_ANGLE="\xE2\x88\x9F${NC}"
 
+###############################################################################
+################################ Prescript Init ###############################
+###############################################################################
 export LANG=C.UTF-8
-
 set -e
 
-# Paths
+###############################################################################
+#################################### Paths ####################################
+###############################################################################
 VAULT_SECRET_FILE="$HOME/.ansible-vault/vault.secret"
 OP_INSTALLED=false
 OP_AUTHENTICATED=false
@@ -48,6 +56,16 @@ DOTFILES_LOG="$HOME/.dotfiles-info/dotfiles.log"
 DOTFILES_DIR="$HOME/.dotfiles-devbox"
 SSH_DIR="$HOME/.ssh"
 IS_FIRST_RUN="$HOME/.dotfiles-info/dotfiles_run"
+
+
+###############################################################################
+################################ Initial Setup ################################
+###############################################################################
+mkdir -p $DOTFILES_INFO_DIR
+
+###############################################################################
+############################### Helper Functions ##############################
+###############################################################################
 # _header colorize the given argument with spacing
 function __task {
   # if _task is called while a task was set, complete the previous
@@ -93,6 +111,9 @@ function _task_done {
   _clear_task
 }
 
+###############################################################################
+############################## OS Specific Setup ##############################
+###############################################################################
 function ubuntu_setup() {
   if ! dpkg -s ansible >/dev/null 2>&1; then
     __task "Installing Ansible"
@@ -176,6 +197,9 @@ function macos_setup() {
   fi
 }
 
+###############################################################################
+################################ Step Functions ###############################
+###############################################################################
 update_ansible_galaxy() {
   local os=$1
   local os_requirements=""
@@ -186,21 +210,6 @@ update_ansible_galaxy() {
   fi
   _cmd "ansible-galaxy install -r $DOTFILES_DIR/requirements/common.yml $os_requirements"
 }
-
-# function confirmVaultAccess() {
-#   __task "Checking for 1Password CLI"
-#   if ! command -v op >/dev/null 2>&1; then
-#     printf "${OVERWRITE} ${RED}[X]  Checking for 1Password CLI\n"
-#     printf " ${WARNING}${RED}   1Password CLI is not installed.${NC}\n"
-#     exit 1
-#   fi
-#   local op_version
-#   op_version=$(op --version)
-#   __task "1Password CLI found: [$op_version] -- Authenticating..."
-#   if ! _cmd "op --account my.1password.com vault list"; then exit 1; fi
-#   _task_done && printf "${GREEN} [✓] Successfully authenticated with 1Password CLI! ☕\n"
-#   return
-# }
 
 detect_os() {
   if [ -f /etc/os-release ]; then
@@ -214,13 +223,6 @@ detect_os() {
 
 function role_select_menu(){
     # initialize an array with our explicit arguments
-    whiptail_args=(
-        --separate-output
-      --title "Install Roles"
-      --checklist "Select roles you'd like to install or update"
-      10 80 
-      "${#roles[@]}"  # note the use of ${#arrayname[@]} to get count of entries
-    )
 
     export NEWT_COLORS='
     window=white,gray
@@ -244,8 +246,12 @@ function role_select_menu(){
     actsellistbox=black,green
     '
 
+
+    whiptail_entries=()
+    count=0
     mapfile -t role_lines < "$DOTFILES_DIR/all_roles"
     for role_line in "${role_lines[@]}"; do
+        ((count++))
         role=()
 
         OLD_IFS=$IFS
@@ -265,9 +271,19 @@ function role_select_menu(){
             role_state=${role[2]}
         fi
 
-        whiptail_args+=( "$role_name" "$role_desc" ${role_state})
+        whiptail_entries+=( "$role_name" "$role_desc" ${role_state})
     done
 
+    whiptail_args=(
+        --separate-output
+      --title "Install Roles"
+      --checklist "Select roles you'd like to install or update"
+      20 80 
+      "${count}"  # note the use of ${#arrayname[@]} to get count of entries
+    )
+
+    whiptail_args+=( "${whiptail_entries[@]}" )
+    
     whiptail_out=$(whiptail "${whiptail_args[@]}" 3>&1 1>&2 2>&3); whiptail_retval=$?
 
     if [[ $whiptail_retval == 1 ]]; then
@@ -278,10 +294,45 @@ function role_select_menu(){
     fi
 }
 
+###############################################################################
+############################## Main Process ##############################
+###############################################################################
+
+# Perform OS specific setup
+dotfiles_os=$(detect_os)
+__task "Loading Setup for detected OS: $dotfiles_os"
+case $dotfiles_os in
+  ubuntu)
+    ubuntu_setup
+    ;;
+  arch)
+    arch_setup
+    ;;
+  darwin)
+    macos_setup
+    ;;
+  *)
+    __task "Unsupported OS"
+    _cmd "echo 'Unsupported OS'"
+    ;;
+esac
+
+# Clone or update remote repo
+if ! [[ -d "$DOTFILES_DIR" ]]; then
+  __task "Cloning repository"
+  _cmd "git clone --quiet https://github.com/jackgpalfrey/.dotfiles-devbox.git $DOTFILES_DIR"
+  # _cmd "git clone --quiet git@github.com:jackgpalfrey/.dotfiles-devbox.git $DOTFILES_DIR"
+else
+  __task "Updating repository"
+  _cmd "git -C $DOTFILES_DIR pull --quiet"
+fi
+pushd "$DOTFILES_DIR" 2>&1 > /dev/null
+
+update_ansible_galaxy $ID
+
+
+# Determine roles
 roles=$(role_select_menu)
-
-
-mkdir -p $DOTFILES_INFO_DIR
 
 if [ -f $DOTFILES_INFO_DIR/installed_roles ]; then
     echo -e "${BOOK} ${BLUE}Loaded preset${NC}"
@@ -308,52 +359,15 @@ if [ ${continue_input} != "y" ]; then
     exit
 fi
 
-dotfiles_os=$(detect_os)
-__task "Loading Setup for detected OS: $dotfiles_os"
-case $dotfiles_os in
-  ubuntu)
-    ubuntu_setup
-    ;;
-  arch)
-    arch_setup
-    ;;
-  darwin)
-    macos_setup
-    ;;
-  *)
-    __task "Unsupported OS"
-    _cmd "echo 'Unsupported OS'"
-    ;;
-esac
 
 
-# if ! [[ -f "$SSH_DIR/authorized_keys" ]]; then
-#   __task "Generating SSH keys"
-#   _cmd "mkdir -p $SSH_DIR"
-#   _cmd "chmod 700 $SSH_DIR"
-#   _cmd "ssh-keygen -b 4096 -t rsa -f $SSH_DIR/id_rsa -N '' -C $USER@$HOSTNAME"
-#   _cmd "cat $SSH_DIR/id_rsa.pub >> $SSH_DIR/authorized_keys"
-# fi
-
-if ! [[ -d "$DOTFILES_DIR" ]]; then
-  __task "Cloning repository"
-  _cmd "git clone --quiet https://github.com/jackgpalfrey/.dotfiles-devbox.git $DOTFILES_DIR"
-  # _cmd "git clone --quiet git@github.com:jackgpalfrey/.dotfiles-devbox.git $DOTFILES_DIR"
-else
-  __task "Updating repository"
-  _cmd "git -C $DOTFILES_DIR pull --quiet"
-fi
-
-pushd "$DOTFILES_DIR" 2>&1 > /dev/null
-update_ansible_galaxy $ID
-
-# confirmVaultAccess
-
+# Execute playbook
 rm -f $VAULT_SECRET_FILE
 ansible-playbook "$DOTFILES_DIR/main.yml" --ask-become-pass --ask-vault-pass "$@"
 
 popd 2>&1 > /dev/null
 
+# Finish up output
 if ! [[ -f "$IS_FIRST_RUN" ]]; then
   echo -e "${CHECK_MARK} ${GREEN}First run complete!${NC}"
   echo -e "${ARROW} ${CYAN}Please reboot your computer to complete the setup.${NC}"
