@@ -17,6 +17,9 @@
         - always
 
   tasks:
+    - name: Debug
+      debug: "msg={{ playbook_dir }}"
+
     - name: Set roles
       ansible.builtin.set_fact:
         run_roles: "{{ ansible_run_tags != ['all'] and ansible_run_tags or default_roles | difference(exclude_roles | default([])) | sort }}"
@@ -34,3 +37,9 @@
       with_items: "{{ run_roles }}"
       tags:
         - always
+
+  post_tasks:
+    - name: Remove tmp directory
+      ansible.builtin.file:
+        path: "{{ tmp_dir }}"
+        state: absent

@@ -1,3 +1,6 @@
+- name: Debug
+  debug: "msg={{ playbook_dir }}"
+
 - name: Install core packages
   become: true
   ansible.builtin.package:

@@ -43,11 +43,11 @@ OP_INSTALLED=false
 OP_AUTHENTICATED=false
 OP_VAULT_SECRET=""
 ID=""
-DOTFILES_LOG="$HOME/.dotfiles.log"
+DOTFILES_INFO_DIR="$HOME/.dotfiles-info"
+DOTFILES_LOG="$HOME/.dotfiles-info/dotfiles.log"
 DOTFILES_DIR="$HOME/.dotfiles-devbox/"
 SSH_DIR="$HOME/.ssh"
-IS_FIRST_RUN="$HOME/.dotfiles_run"
-IS_FIRST_REBOOT="$HOME/.dotfiles_first_reboot"
+IS_FIRST_RUN="$HOME/.dotfiles-info/dotfiles_run"
 # _header colorize the given argument with spacing
 function __task {
   # if _task is called while a task was set, complete the previous
@@ -210,6 +210,8 @@ detect_os() {
   fi
 }
 
+mkdir -p $DOTFILES_INFO_DIR
+
 dotfiles_os=$(detect_os)
 __task "Loading Setup for detected OS: $dotfiles_os"
 case $dotfiles_os in
@@ -262,7 +264,6 @@ if ! [[ -f "$IS_FIRST_RUN" ]]; then
   echo -e "${ARROW} ${CYAN}Then follow the instructions in ~/dotfiles-steps.md${NC}"
   
   touch "$IS_FIRST_RUN"
-  touch "$IS_FIRST_REBOOT"
 fi
 
 # vi:ft=sh:

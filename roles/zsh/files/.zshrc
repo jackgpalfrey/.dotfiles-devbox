@@ -1,7 +1,8 @@
 # Path to oh-my-zsh installation
 # export ZSH="$HOME/.oh-my-zsh"
 
-export PATH=$PATH:~/scripts
+# export PATH=$PATH:~/scripts
+export PATH=$PATH:~/bin
 export PATH=$PATH:/usr/local/go/bin
 export PATH=$PATH:~/go/bin
 
@@ -60,7 +61,7 @@ alias py="python3"
 if [ -f ~/dotfiles-steps.md ]; then
    echo "Intialisation Steps"
    cat ~/dotfiles-steps.md
-   echo "Run `dotfiles-finish` when complete"
+   echo "Run \`dotfiles-finish\` when complete"
 fi
 
 eval "$(starship init zsh)"
