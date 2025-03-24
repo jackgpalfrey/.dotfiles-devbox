@@ -1,0 +1,12 @@
+common;Core packages and config;ON
+neovim;Neovim editor;ON
+node;NodeJS with 'n' version manager;ON
+ssh;Configure ssh with stored key;ON
+git;Setup git and github CLI;ON
+rust;Setup and install Rust;ON
+zsh;Setup and install ZSH;ON
+starship;Setup and install starship;ON
+scripts;Add scripts to ~/bin;ON
+tmux;Setup and install tmux;ON
+python;Setup and install python;ON
+golang;Setup and install golang;ON

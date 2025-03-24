@@ -1,3 +1,5 @@
+#!/bin/bash
+
 if [ -f ~/dotfiles-steps.md ]; then
    echo "Intialisation Steps"
    cat ~/dotfiles-steps.md

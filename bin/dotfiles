@@ -31,7 +31,7 @@ ARROW="${SEA}\xE2\x96\xB6${NC}"
 BOOK="${RED}\xF0\x9F\x93\x8B${NC}"
 HOT="${ORANGE}\xF0\x9F\x94\xA5${NC}"
 WARNING="${RED}\xF0\x9F\x9A\xA8${NC}"
-RIGHT_ANGLE="${GREEN}\xE2\x88\x9F${NC}"
+RIGHT_ANGLE="\xE2\x88\x9F${NC}"
 
 export LANG=C.UTF-8
 
@@ -45,7 +45,7 @@ OP_VAULT_SECRET=""
 ID=""
 DOTFILES_INFO_DIR="$HOME/.dotfiles-info"
 DOTFILES_LOG="$HOME/.dotfiles-info/dotfiles.log"
-DOTFILES_DIR="$HOME/.dotfiles-devbox/"
+DOTFILES_DIR="$HOME/.dotfiles-devbox"
 SSH_DIR="$HOME/.ssh"
 IS_FIRST_RUN="$HOME/.dotfiles-info/dotfiles_run"
 # _header colorize the given argument with spacing
@@ -58,6 +58,7 @@ function __task {
   TASK=$1
   printf "${LBLACK} [ ]  ${TASK} \n${LRED}"
 }
+
 
 # _cmd performs commands with error checking
 function _cmd {
@@ -210,7 +211,102 @@ detect_os() {
   fi
 }
 
+
+function role_select_menu(){
+    # initialize an array with our explicit arguments
+    whiptail_args=(
+        --separate-output
+      --title "Install Roles"
+      --checklist "Select roles you'd like to install or update"
+      10 80 
+      "${#roles[@]}"  # note the use of ${#arrayname[@]} to get count of entries
+    )
+
+    export NEWT_COLORS='
+    window=white,gray
+    border=lightgray,gray
+    shadow=white,black
+    button=black,green
+    actbutton=black,red
+    compactbutton=lightgray,black
+    title=yellow,gray
+    roottext=red,black
+    textbox=lightgray,gray
+    acttextbox=gray,white
+    entry=black,lightgray
+    disentry=gray,black
+    checkbox=black,lightgray
+    actcheckbox=black,green
+    emptyscale=,lightgray
+    fullscale=,brown
+    listbox=black,lightgray
+    actlistbox=lightgray,black
+    actsellistbox=black,green
+    '
+
+    mapfile -t role_lines < "$DOTFILES_DIR/all_roles"
+    for role_line in "${role_lines[@]}"; do
+        role=()
+
+        OLD_IFS=$IFS
+        IFS=";"
+        IFS=";" read -a role <<< $role_line
+        # IFS=$OLD_IFS
+        role_name=${role[0]}
+        role_desc=${role[1]}
+        
+        if [ -f $DOTFILES_INFO_DIR/installed_roles ]; then
+            if grep -q $role_name "$DOTFILES_INFO_DIR/installed_roles"; then
+                role_state="ON"
+            else
+                role_state="OFF"
+            fi
+        else
+            role_state=${role[2]}
+        fi
+
+        whiptail_args+=( "$role_name" "$role_desc" ${role_state})
+    done
+
+    whiptail_out=$(whiptail "${whiptail_args[@]}" 3>&1 1>&2 2>&3); whiptail_retval=$?
+
+    if [[ $whiptail_retval == 1 ]]; then
+        echo "Install Cancelled" > /dev/tty
+        exit 1
+    else
+        echo $whiptail_out
+    fi
+}
+
+roles=$(role_select_menu)
+
+
 mkdir -p $DOTFILES_INFO_DIR
+
+if [ -f $DOTFILES_INFO_DIR/installed_roles ]; then
+    echo -e "${BOOK} ${BLUE}Loaded preset${NC}"
+else
+    touch $DOTFILES_INFO_DIR/installed_roles
+fi
+
+echo $roles | tr " " "\n"> "$DOTFILES_INFO_DIR/installed_roles"
+
+echo -e "${BOOK} ${BLUE}Installing or updating the following roles${NC}"
+IFS="\n" mapfile -t lines < "$DOTFILES_INFO_DIR/installed_roles"
+for line in "${lines[@]}"; do
+    printf "${RIGHT_ANGLE} ${LBLUE}${line}\n"
+done
+
+echo ""
+echo -e -n "${SEA}${ARROW} "
+continue_input=$(read -n 1 -r -p "Would you like to continue [Y/n]: " && tr '[:upper:]' '[:lower:]' <<< "${REPLY}")
+continue_input=${continue_input:-y}
+echo ""
+
+if [ ${continue_input} != "y" ]; then
+    echo "Stopping"
+    exit
+fi
 
 dotfiles_os=$(detect_os)
 __task "Loading Setup for detected OS: $dotfiles_os"
