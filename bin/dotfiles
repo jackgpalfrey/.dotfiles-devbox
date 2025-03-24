@@ -111,20 +111,73 @@ function _task_done {
   _clear_task
 }
 
+# Clears the entire current line regardless of terminal size.
+# See the magic by running:
+# { sleep 1; clear_this_line ; }&
+clear_line(){
+        printf '\r'
+        cols="$(tput cols)"
+        for i in $(seq "$cols"); do
+                printf ' '
+        done
+        printf '\r'
+}
+
+# Erases the amount of lines specified.
+# Usage: erase_lines [AMOUNT]
+# See the magic by running:
+# { sleep 1; erase_lines 2; }&
+erase_lines(){
+        # Default line count to 1.
+        test -z "$1" && lines="1" || lines="$1"
+
+        # This is what we use to move the cursor to previous lines.
+        UP='\033[1A'
+
+        # Exit if erase count is zero.
+        [ "$lines" = 0 ] && return
+
+        # Erase.
+        if [ "$lines" = 1 ]; then
+                clear_line
+        else
+                lines=$((lines-1))
+                clear_line
+                for i in $(seq "$lines"); do
+                        printf "$UP"
+                        clear_line
+                done
+        fi
+}
+
 ###############################################################################
 ############################## OS Specific Setup ##############################
 ###############################################################################
 function ubuntu_setup() {
+    
   if ! dpkg -s ansible >/dev/null 2>&1; then
     __task "Installing Ansible"
+    _cmd "sudo echo -n"
+    echo -n -e "${BLUE}"
+    echo -n -e " [              ] - Updating packages                         \r"
     _cmd "sudo apt-get update"
+    echo -n -e " [##            ] - Installing software-properties-common     \r"
     _cmd "sudo apt-get install -y software-properties-common"
+    echo -n -e " [####          ] - Adding ansible ppa                        \r"
     _cmd "sudo apt-add-repository -y ppa:ansible/ansible"
+    echo -n -e " [######        ] - Updating packages                         \r"
     _cmd "sudo apt-get update"
+    echo -n -e " [########      ] - Installing ansible package                \r"
     _cmd "sudo apt-get install -y ansible"
+    echo -n -e " [##########    ] - Installing python3-argcomplete            \r"
     _cmd "sudo apt-get install python3-argcomplete"
+    echo -n -e " [############  ] - Activating python3-argcomplete            \r"
     # _cmd "sudo activate-global-python-argcomplete3"
+    echo -n -e " [##############]                                             \r"
+  else    
+    __task "Ansible already installed"
   fi
+
   if ! dpkg -s python3 >/dev/null 2>&1; then
     __task "Installing Python3"
     _cmd "sudo apt-get install -y python3"
@@ -287,7 +340,8 @@ function role_select_menu(){
     whiptail_out=$(whiptail "${whiptail_args[@]}" 3>&1 1>&2 2>&3); whiptail_retval=$?
 
     if [[ $whiptail_retval == 1 ]]; then
-        echo "Install Cancelled" > /dev/tty
+        printf "${OVERWRITE}${LRED} [X]  ${TASK}${LRED}\n" > /dev/tty
+        echo "      Install Cancelled" > /dev/tty
         exit 1
     else
         echo $whiptail_out
@@ -317,6 +371,8 @@ case $dotfiles_os in
     ;;
 esac
 
+erase_lines 2
+
 # Clone or update remote repo
 if ! [[ -d "$DOTFILES_DIR" ]]; then
   __task "Cloning repository"
@@ -329,9 +385,10 @@ fi
 pushd "$DOTFILES_DIR" 2>&1 > /dev/null
 
 update_ansible_galaxy $ID
-
+erase_lines 1
 
 # Determine roles
+__task "Installing or updating the following roles"
 roles=$(role_select_menu)
 
 if [ -f $DOTFILES_INFO_DIR/installed_roles ]; then
@@ -342,7 +399,6 @@ fi
 
 echo $roles | tr " " "\n"> "$DOTFILES_INFO_DIR/installed_roles"
 
-echo -e "${BOOK} ${BLUE}Installing or updating the following roles${NC}"
 IFS="\n" mapfile -t lines < "$DOTFILES_INFO_DIR/installed_roles"
 for line in "${lines[@]}"; do
     printf "${RIGHT_ANGLE} ${LBLUE}${line}\n"
@@ -355,7 +411,7 @@ continue_input=${continue_input:-y}
 echo ""
 
 if [ ${continue_input} != "y" ]; then
-    echo "Stopping"
+    echo "Cancelled"
     exit
 fi
 
