@@ -47,6 +47,7 @@ DOTFILES_LOG="$HOME/.dotfiles.log"
 DOTFILES_DIR="$HOME/.dotfiles-devbox/"
 SSH_DIR="$HOME/.ssh"
 IS_FIRST_RUN="$HOME/.dotfiles_run"
+IS_FIRST_REBOOT="$HOME/.dotfiles_first_reboot"
 # _header colorize the given argument with spacing
 function __task {
   # if _task is called while a task was set, complete the previous
@@ -258,7 +259,10 @@ popd 2>&1 > /dev/null
 if ! [[ -f "$IS_FIRST_RUN" ]]; then
   echo -e "${CHECK_MARK} ${GREEN}First run complete!${NC}"
   echo -e "${ARROW} ${CYAN}Please reboot your computer to complete the setup.${NC}"
+  echo -e "${ARROW} ${CYAN}Then follow the instructions in ~/dotfiles-steps.md${NC}"
+  
   touch "$IS_FIRST_RUN"
+  touch "$IS_FIRST_REBOOT"
 fi
 
 # vi:ft=sh:

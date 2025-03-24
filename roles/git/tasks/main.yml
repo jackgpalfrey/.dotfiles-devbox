@@ -12,3 +12,10 @@
   copy:
     src: "files/"
     dest: "$HOME"
+
+- name: Add gh setup to dotfiles-steps.md
+  ansible.builtin.lineinfile:
+    path: "$HOME/dotfiles-steps.md"
+    line: "[ ] Login to github with `gh auth login`"
+    create: true
+    state: present

@@ -57,4 +57,10 @@ alias py="python3"
 
 . "$HOME/.cargo/env"
 
+if [ -f ~/dotfiles-steps.md ]; then
+   echo "Intialisation Steps"
+   cat ~/dotfiles-steps.md
+   echo "Run `dotfiles-finish` when complete"
+fi
+
 eval "$(starship init zsh)"
