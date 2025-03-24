@@ -46,16 +46,27 @@ set -e
 ###############################################################################
 #################################### Paths ####################################
 ###############################################################################
-VAULT_SECRET_FILE="$HOME/.ansible-vault/vault.secret"
+DOTFILES_DIR="$HOME/.dotfiles-devbox"
+DOTFILES_REQUIREMENTS_DIR="$DOTFILES_DIR/requirements"
+DOTFILES_SSH_MODES_DIR=$DOTFILES_DIR/roles/ssh/files/
+DOTFILES_ALL_ROLES_FILE=$DOTFILES_DIR/all_roles
+DOTFILES_PLAYBOOK_FILE=$DOTFILES_DIR/main.yml
+
+DOTFILES_INFO_DIR="$HOME/.dotfiles-info"
+DOTFILES_LOG_FILE="$DOTFILES_INFO_DIR/dotfiles.log"
+DOTFILES_INSTALLED_ROLES_FILE="$DOTFILES_INFO_DIR/installed_roles"
+
+SSH_DIR="$HOME/.ssh"
+
+IS_FIRST_RUN_FILE="$HOME/.dotfiles-info/dotfiles_run"
+
+###############################################################################
+################################## Variables ##################################
+###############################################################################
 OP_INSTALLED=false
 OP_AUTHENTICATED=false
 OP_VAULT_SECRET=""
 ID=""
-DOTFILES_INFO_DIR="$HOME/.dotfiles-info"
-DOTFILES_LOG="$HOME/.dotfiles-info/dotfiles.log"
-DOTFILES_DIR="$HOME/.dotfiles-devbox"
-SSH_DIR="$HOME/.ssh"
-IS_FIRST_RUN="$HOME/.dotfiles-info/dotfiles_run"
 
 default_ssh_mode=""
 
@@ -82,23 +93,23 @@ function __task {
 # _cmd performs commands with error checking
 function _cmd {
   #create log if it doesn't exist
-  if ! [[ -f $DOTFILES_LOG ]]; then
-    touch $DOTFILES_LOG
+  if ! [[ -f $DOTFILES_LOG_FILE ]]; then
+    touch $DOTFILES_LOG_FILE
   fi
   # empty conduro.log
-  > $DOTFILES_LOG
+  > $DOTFILES_LOG_FILE
   # hide stdout, on error we print and exit
-  if eval "$1" 1> /dev/null 2> $DOTFILES_LOG; then
+  if eval "$1" 1> /dev/null 2> $DOTFILES_LOG_FILE; then
     return 0 # success
   fi
   # read error from log and add spacing
   printf "${OVERWRITE}${LRED} [X]  ${TASK}${LRED}\n"
   while read line; do
     printf "      ${line}\n"
-  done < $DOTFILES_LOG
+  done < $DOTFILES_LOG_FILE
   printf "\n"
   # remove log file
-  rm $DOTFILES_LOG
+  rm $DOTFILES_LOG_FILE
   # exit installation
   exit 1
 }
@@ -256,11 +267,11 @@ update_ansible_galaxy() {
   local os=$1
   local os_requirements=""
   __task "Updating Ansible Galaxy"
-  if [ -f "$DOTFILES_DIR/requirements/$os.yml" ]; then
+  if [ -f "$DOTFILES_REQUIREMENTS_DIR/$os.yml" ]; then
     __task "${OVERWRITE}Updating Ansible Galaxy with OS Config: $os"
-    os_requirements="$DOTFILES_DIR/requirements/$os.yml"
+    os_requirements="$DOTFILES_REQUIREMENTS_DIR/$os.yml"
   fi
-  _cmd "ansible-galaxy install -r $DOTFILES_DIR/requirements/common.yml $os_requirements"
+  _cmd "ansible-galaxy install -r $DOTFILES_REQUIREMENTS_DIR/common.yml $os_requirements"
 }
 
 detect_os() {
@@ -276,7 +287,7 @@ detect_os() {
 function role_select_menu(){
     whiptail_entries=()
     count=0
-    mapfile -t role_lines < "$DOTFILES_DIR/all_roles"
+    mapfile -t role_lines < "$DOTFILES_ALL_ROLES_FILE"
     for role_line in "${role_lines[@]}"; do
         ((count++))
         role=()
@@ -288,9 +299,9 @@ function role_select_menu(){
         role_name=${role[0]}
         role_desc=${role[1]}
         
-        if [ -f $DOTFILES_INFO_DIR/installed_roles ]; then
-            if grep -q -E "^$role_name(:.*)?$" "$DOTFILES_INFO_DIR/installed_roles"; then
-                role_name=$(grep -E "^$role_name(:.*)?$" "$DOTFILES_INFO_DIR/installed_roles" 2>&1)
+        if [ -f $DOTFILES_INSTALLED_ROLES_FILE ]; then
+            if grep -q -E "^$role_name(:.*)?$" "$DOTFILES_INSTALLED_ROLES_FILE"; then
+                role_name=$(grep -E "^$role_name(:.*)?$" "$DOTFILES_INSTALLED_ROLES_FILE" 2>&1)
                 role_state="ON"
             else
                 role_state="OFF"
@@ -332,7 +343,7 @@ function ssh_mode_menu(){
     fi
     whiptail_entries+=( "new" "Create new ssh keys with ssh-agent" "$new_state" )
 
-    mapfile -t file_list < <(ls $DOTFILES_DIR/roles/ssh/files/)
+    mapfile -t file_list < <(ls $DOTFILES_SSH_MODES_DIR)
     for mode_name in "${file_list[@]}"; do
         mode_desc="Use ${mode_name} ssh keys"
         if [[ $mode_name == $default_ssh_mode ]]; then
@@ -439,29 +450,29 @@ erase_lines 1
 __task "Installing or updating the following roles"
 roles=$(role_select_menu)
 
-if [ -f $DOTFILES_INFO_DIR/installed_roles ]; then
+if [ -f $DOTFILES_INSTALLED_ROLES_FILE ]; then
     echo -e -n
 else
-    touch $DOTFILES_INFO_DIR/installed_roles
+    touch $DOTFILES_INSTALLED_ROLES_FILE
 fi
 
-echo $roles | tr " " "\n"> "$DOTFILES_INFO_DIR/installed_roles"
+echo $roles | tr " " "\n"> "$DOTFILES_INSTALLED_ROLES_FILE"
 
 # Handle SSH Mode
-current_ssh_state_str=$(grep -E "^ssh(:.*)?$" "$DOTFILES_INFO_DIR/installed_roles" 2>&1)
+current_ssh_state_str=$(grep -E "^ssh(:.*)?$" "$DOTFILES_INSTALLED_ROLES_FILE" 2>&1)
 if [[ current_ssh_state_str != "" ]]; then
     current_ssh_state=()
     IFS=":" read -a current_ssh_state <<< $current_ssh_state_str
     default_ssh_mode=${current_ssh_state[1]}
 
     ssh_mode=$(ssh_mode_menu)
-    sed -i -E "s/^ssh(:.*)?$/ssh:${ssh_mode}/g" "$DOTFILES_INFO_DIR/installed_roles"
+    sed -i -E "s/^ssh(:.*)?$/ssh:${ssh_mode}/g" "$DOTFILES_INSTALLED_ROLES_FILE"
 fi
 
 
-IFS="\n" mapfile -t lines < "$DOTFILES_INFO_DIR/installed_roles"
+IFS="\n" mapfile -t lines < "$DOTFILES_INSTALLED_ROLES_FILE"
 for line in "${lines[@]}"; do
-    printf "${RIGHT_ANGLE} ${LBLUE}${line}\n"
+    printf "      ${LBLUE}${RIGHT_ANGLE} ${LBLUE}${line}\n"
 done
 
 echo ""
@@ -479,18 +490,17 @@ fi
 
 
 # Execute playbook
-rm -f $VAULT_SECRET_FILE
-ansible-playbook "$DOTFILES_DIR/main.yml" --ask-become-pass --ask-vault-pass "$@"
+ansible-playbook "$DOTFILES_PLAYBOOK_FILE" --ask-become-pass --ask-vault-pass "$@"
 
 popd 2>&1 > /dev/null
 
 # Finish up output
-if ! [[ -f "$IS_FIRST_RUN" ]]; then
+if ! [[ -f "$IS_FIRST_RUN_FILE" ]]; then
   echo -e "${CHECK_MARK} ${GREEN}First run complete!${NC}"
   echo -e "${ARROW} ${CYAN}Please reboot your computer to complete the setup.${NC}"
   echo -e "${ARROW} ${CYAN}Then follow the instructions in ~/dotfiles-steps.md${NC}"
   
-  touch "$IS_FIRST_RUN"
+  touch "$IS_FIRST_RUN_FILE"
 fi
 
 # vi:ft=sh:
