@@ -154,10 +154,8 @@ erase_lines(){
 ############################## OS Specific Setup ##############################
 ###############################################################################
 function ubuntu_setup() {
-    
   if ! dpkg -s ansible >/dev/null 2>&1; then
     __task "Installing Ansible"
-    _cmd "sudo echo -n"
     echo -n -e "${BLUE}"
     echo -n -e " [              ] - Updating packages                         \r"
     _cmd "sudo apt-get update"
@@ -351,6 +349,8 @@ function role_select_menu(){
 ###############################################################################
 ############################## Main Process ##############################
 ###############################################################################
+# Get sudo password
+_cmd "sudo echo -n"
 
 # Perform OS specific setup
 dotfiles_os=$(detect_os)
