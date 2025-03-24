@@ -170,17 +170,19 @@ function ubuntu_setup() {
     __task "Installing Ansible"
     echo -n -e "${BLUE}"
     echo -n -e " [              ] - Updating packages                         \r"
-    _cmd "sudo apt-get update"
+
+    echo $(time _cmd "sudo apt-get update")
+
     echo -n -e " [##            ] - Installing software-properties-common     \r"
-    _cmd "sudo apt-get install -y software-properties-common"
+    echo $(time _cmd "time sudo apt-get install -y software-properties-common")
     echo -n -e " [####          ] - Adding ansible ppa                        \r"
-    _cmd "sudo apt-add-repository -y ppa:ansible/ansible"
+    echo $(time _cmd "sudo apt-add-repository -y ppa:ansible/ansible")
     echo -n -e " [######        ] - Updating packages                         \r"
-    _cmd "sudo apt-get update"
+    echo $(time _cmd "sudo apt-get update")
     echo -n -e " [########      ] - Installing ansible package                \r"
-    _cmd "sudo apt-get install -y ansible"
+    echo $(time _cmd "sudo apt-get install -y ansible")
     echo -n -e " [##########    ] - Installing python3-argcomplete            \r"
-    _cmd "sudo apt-get install python3-argcomplete"
+    echo $(time _cmd "sudo apt-get install python3-argcomplete")
     echo -n -e " [############  ] - Activating python3-argcomplete            \r"
     # _cmd "sudo activate-global-python-argcomplete3"
     echo -n -e " [##############]                                             \r"
