@@ -34,13 +34,17 @@
     #     run_roles: "{{ ansible_run_tags != ['all'] and ansible_run_tags or default_roles | difference(exclude_roles | default([])) | sort }}"
     #   tags:
     #     - always
+    #
 
     - name: Run roles
       ansible.builtin.include_role:
         apply:
           tags:
             - "{{ roles_item }}"
-        name: "{{ roles_item }}"
+            - "{{ (roles_item | split(':'))[0] }}"
+        name: "{{ (roles_item | split(':'))[0] }}"
+      vars:
+        config_string: "{{ (roles_item | split(':'))[1] | default('') }}"
       loop_control:
         loop_var: roles_item
       with_items: "{{ run_roles }}"

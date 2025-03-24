@@ -1,11 +1,26 @@
+- debug: "msg='SSH Mode: {{ config_string }}'"
+
 - name: Ensure .ssh directory exists.
   file:
     dest: "$HOME/.ssh"
     mode: 0700
     state: directory
 
-- name: Copy ssh
+- name: Check ssh keys exist for mode
+  stat:
+    path: "{{ role_path }}/files/{{ config_string }}"
+  register: ssh_keys_dir
+
+- name: Check ssh keys exist for mode
+  fail:
+    msg: "SSH mode '{{ config_string }}' does not exist'"
+  when: not ssh_keys_dir.stat.exists
+
+- debug: msg={{ssh_keys_dir.stat}}
+
+- name: Copy ssh keys
   copy:
-    src: "files/.ssh/"
+    src: "{{ role_path }}/files/{{ config_string }}/"
     dest: "$HOME/.ssh"
     mode: 0600
+  when: ssh_keys_dir.stat.exists

@@ -57,6 +57,7 @@ DOTFILES_DIR="$HOME/.dotfiles-devbox"
 SSH_DIR="$HOME/.ssh"
 IS_FIRST_RUN="$HOME/.dotfiles-info/dotfiles_run"
 
+default_ssh_mode=""
 
 ###############################################################################
 ################################ Initial Setup ################################
@@ -273,31 +274,6 @@ detect_os() {
 
 
 function role_select_menu(){
-    # initialize an array with our explicit arguments
-
-    export NEWT_COLORS='
-    window=white,gray
-    border=lightgray,gray
-    shadow=white,black
-    button=black,green
-    actbutton=black,red
-    compactbutton=lightgray,black
-    title=yellow,gray
-    roottext=red,black
-    textbox=lightgray,gray
-    acttextbox=gray,white
-    entry=black,lightgray
-    disentry=gray,black
-    checkbox=black,lightgray
-    actcheckbox=black,green
-    emptyscale=,lightgray
-    fullscale=,brown
-    listbox=black,lightgray
-    actlistbox=lightgray,black
-    actsellistbox=black,green
-    '
-
-
     whiptail_entries=()
     count=0
     mapfile -t role_lines < "$DOTFILES_DIR/all_roles"
@@ -313,7 +289,8 @@ function role_select_menu(){
         role_desc=${role[1]}
         
         if [ -f $DOTFILES_INFO_DIR/installed_roles ]; then
-            if grep -q $role_name "$DOTFILES_INFO_DIR/installed_roles"; then
+            if grep -q -E "^$role_name(:.*)?$" "$DOTFILES_INFO_DIR/installed_roles"; then
+                role_name=$(grep -E "^$role_name(:.*)?$" "$DOTFILES_INFO_DIR/installed_roles" 2>&1)
                 role_state="ON"
             else
                 role_state="OFF"
@@ -346,11 +323,82 @@ function role_select_menu(){
     fi
 }
 
+function ssh_mode_menu(){
+    whiptail_entries=()
+    if [[ $default_ssh_mode == "" || $default_ssh_mode == "new" ]]; then
+        new_state="on"
+    else
+        new_state="off"
+    fi
+    whiptail_entries+=( "new" "Create new ssh keys with ssh-agent" "$new_state" )
+
+    mapfile -t file_list < <(ls $DOTFILES_DIR/roles/ssh/files/)
+    for mode_name in "${file_list[@]}"; do
+        mode_desc="Use ${mode_name} ssh keys"
+        if [[ $mode_name == $default_ssh_mode ]]; then
+            mode_state="on"
+        else
+            mode_state="off"
+        fi
+        whiptail_entries+=( "$mode_name" "$mode_desc" "$mode_state")
+    done
+
+    count=${#file_list[@]}
+    (( count++ ))
+
+    whiptail_args=(
+        --separate-output
+      --title "SSH"
+      --radiolist "Select which ssh keys to use or new to create new keys."
+      20 80 
+      "${count}"  # note the use of ${#arrayname[@]} to get count of entries
+    )
+
+    whiptail_args+=( "${whiptail_entries[@]}" )
+    
+    whiptail_out=$(whiptail "${whiptail_args[@]}" 3>&1 1>&2 2>&3); whiptail_retval=$?
+
+    if [[ $whiptail_retval == 1 ]]; then
+        printf "${OVERWRITE}${LRED} [X]  ${TASK}${LRED}\n" > /dev/tty
+        echo "      Install Cancelled" > /dev/tty
+        exit 1
+    else
+        echo $whiptail_out
+    fi
+}
+
 ###############################################################################
 ############################## Main Process ##############################
 ###############################################################################
+
+
+
+
 # Get sudo password
 _cmd "sudo echo -n"
+
+# Setup menu coloring
+export NEWT_COLORS='
+    window=white,gray
+    border=lightgray,gray
+    shadow=white,black
+    button=black,green
+    actbutton=black,red
+    compactbutton=lightgray,black
+    title=yellow,gray
+    roottext=red,black
+    textbox=lightgray,gray
+    acttextbox=gray,white
+    entry=black,lightgray
+    disentry=gray,black
+    checkbox=black,lightgray
+    actcheckbox=black,green
+    emptyscale=,lightgray
+    fullscale=,brown
+    listbox=black,lightgray
+    actlistbox=lightgray,black
+    actsellistbox=black,green
+    '
 
 # Perform OS specific setup
 dotfiles_os=$(detect_os)
@@ -392,12 +440,24 @@ __task "Installing or updating the following roles"
 roles=$(role_select_menu)
 
 if [ -f $DOTFILES_INFO_DIR/installed_roles ]; then
-    echo -e "${BOOK} ${BLUE}Loaded preset${NC}"
+    echo -e -n
 else
     touch $DOTFILES_INFO_DIR/installed_roles
 fi
 
 echo $roles | tr " " "\n"> "$DOTFILES_INFO_DIR/installed_roles"
+
+# Handle SSH Mode
+current_ssh_state_str=$(grep -E "^ssh(:.*)?$" "$DOTFILES_INFO_DIR/installed_roles" 2>&1)
+if [[ current_ssh_state_str != "" ]]; then
+    current_ssh_state=()
+    IFS=":" read -a current_ssh_state <<< $current_ssh_state_str
+    default_ssh_mode=${current_ssh_state[1]}
+
+    ssh_mode=$(ssh_mode_menu)
+    sed -i -E "s/^ssh(:.*)?$/ssh:${ssh_mode}/g" "$DOTFILES_INFO_DIR/installed_roles"
+fi
+
 
 IFS="\n" mapfile -t lines < "$DOTFILES_INFO_DIR/installed_roles"
 for line in "${lines[@]}"; do
@@ -414,6 +474,7 @@ if [ ${continue_input} != "y" ]; then
     echo "Cancelled"
     exit
 fi
+
 
 
 
