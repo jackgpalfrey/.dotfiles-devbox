@@ -1,0 +1,9 @@
+if [ -f ~/dotfiles-steps.md ]; then
+   echo "Intialisation Steps"
+   cat ~/dotfiles-steps.md
+   echo ""
+   echo "Run \`dotfiles-finish\` when complete"
+   echo "or \`dotfiles-steps\` to see again"
+else
+   echo "All steps completed."
+fi
