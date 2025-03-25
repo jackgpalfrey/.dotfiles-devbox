@@ -1,0 +1,9 @@
+- name: "Stdfs | Create ~/projects"
+  ansible.builtin.file:
+    path: "$HOME/projects"
+    state: directory
+
+- name: "Stdfs | Create ~/tests"
+  ansible.builtin.file:
+    path: "$HOME/tests"
+    state: directory

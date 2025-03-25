@@ -58,7 +58,7 @@
         - always
 
   post_tasks:
-    - name: Remove tmp directory
-      ansible.builtin.file:
-        path: "{{ tmp_dir }}"
-        state: absent
+    - name: Cleanup
+      ansible.builtin.import_tasks: post_tasks/cleanup.yml
+      tags:
+        - always

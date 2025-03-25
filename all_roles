@@ -11,3 +11,4 @@ scripts;Add scripts to ~/bin;ON
 tmux;Setup and install tmux;ON
 python;Setup and install python;ON
 golang;Setup and install golang;ON
+stdfs;Setup filesystem with ~/projects and ~/tests directories;ON

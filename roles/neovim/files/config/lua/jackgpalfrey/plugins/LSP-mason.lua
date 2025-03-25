@@ -27,6 +27,7 @@ return {
 				"pyright",
 				"jsonls",
 				"gopls",
+				"yamlls",
 				"tailwindcss",
 			},
 		}
