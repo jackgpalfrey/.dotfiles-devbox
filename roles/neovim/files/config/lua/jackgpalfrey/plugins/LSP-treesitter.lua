@@ -8,8 +8,10 @@ return {
 	config = function()
 		local treesitter = require "nvim-treesitter.configs"
 
+		require "jackgpalfrey.config"
+
 		treesitter.setup {
-			ensure_installed = { "c", "cpp", "go", "lua", "jinja", "python", "rust", "tsx", "json", "javascript", "typescript", "yaml", "html", "css", "prisma", "markdown", "markdown_inline", "svelte", "graphql", "vimdoc", "vim", "bash", "dockerfile", "gitignore", "query" },
+			ensure_installed = TS_ensure_installed,
 			-- Install parsers synchronously (only applied to `ensure_installed`)
 			sync_install = false,
 

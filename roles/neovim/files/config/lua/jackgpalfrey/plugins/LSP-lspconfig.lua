@@ -18,64 +18,9 @@ return {
 
 	config = function()
 		-- example using `opts` for defining servers
+		require "jackgpalfrey.config"
 		local opts = {
-			servers = {
-				lua_ls = {},
-				emmet_ls = {
-					filetypes = { "html", "typescriptreact", "javascriptreact", "css", "sass", "scss", "less", "svelte" },
-				},
-				tailwindcss = {
-					filetypes = { "html", "typescriptreact", "javascriptreact", "css", "sass", "scss", "less", "svelte" },
-				},
-				ts_ls = {
-					runtime = { version = "LuaJIT" },
-					settings = {
-						Lua = {
-							hint = {
-								enable = true,
-								semicolon = "All",
-								setType = true,
-							},
-							diagnostics = {
-								globals = { "vim" },
-							},
-						},
-					},
-				},
-				svelte = {},
-				jsonls = {
-					settings = {
-						json = {
-							schemas = require("schemastore").json.schemas(),
-							validate = { enable = true },
-						},
-					},
-				},
-				yamlls = {
-					settings = {
-						yaml = {
-							schemaStore = {
-								-- You must disable built-in schemaStore support if you want to use
-								-- this plugin and its advanced options like `ignore`.
-								enable = false,
-								-- Avoid TypeError: Cannot read properties of undefined (reading 'length')
-								url = "",
-							},
-							schemas = require("schemastore").yaml.schemas(),
-						},
-					},
-				},
-				pylsp = {
-					settings = {
-						pylsp = {
-							plugins = {
-								jedi_completion = { fuzzy = true },
-								pycodestyle = { enabled = true },
-							},
-						},
-					},
-				},
-			},
+			servers = LSP_servers,
 		}
 
 		local lspconfig = require "lspconfig"

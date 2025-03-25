@@ -4,24 +4,9 @@ return {
 	config = function()
 		local conform = require "conform"
 
+		require "jackgpalfrey.config"
 		conform.setup {
-			formatters_by_ft = {
-				lua = { "stylua" },
-				python = { "isort", "black" },
-				javascript = { "prettier" },
-				typescript = { "prettier" },
-				javascriptreact = { "prettier" },
-				typescriptreact = { "prettier" },
-				svelte = { "prettier" },
-				css = { "prettier" },
-				html = { "prettier" },
-				htmldjango = { "djlint" },
-				json = { "prettier" },
-				yaml = { "prettier" },
-				markdown = { "prettier" },
-				graphql = { "prettier" },
-				templ = {},
-			},
+			formatters_by_ft = Formatters_by_ft,
 			notify_on_error = false,
 			format_on_save = function(bufnr)
 				if vim.g.disable_autoformat or vim.b[bufnr].disable_autoformat then
