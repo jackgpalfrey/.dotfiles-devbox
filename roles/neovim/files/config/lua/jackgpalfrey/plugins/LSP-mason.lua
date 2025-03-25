@@ -29,6 +29,7 @@ return {
 				"gopls",
 				"yamlls",
 				"tailwindcss",
+				"pylsp",
 			},
 		}
 

@@ -65,7 +65,16 @@ return {
 						},
 					},
 				},
-				pylsp = {},
+				pylsp = {
+					settings = {
+						pylsp = {
+							plugins = {
+								jedi_completion = { fuzzy = true },
+								pycodestyle = { enabled = true },
+							},
+						},
+					},
+				},
 			},
 		}
 
